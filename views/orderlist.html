@@ -1,0 +1,321 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+<script src="https://unpkg.com/vue"></script>
+<div id="oderslist">
+    <div class="container-fluid row" id="orders" v-if="show">
+        <div class="col-md-8 col-md-offset-2 text-center">
+            <h2>ORDERS</h2>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th scope="col">ORDER- ID</th>
+                        <th scope="col">EMPLOYEE-ID</th>
+                        <th scope="col">DATE</th>
+                        <th scope="col">AMOUNT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="order in orderlistarr">
+                        <td>{{order.orderid}}</td>
+                        <td>{{eid}}</td>
+                        <td>{{order.date}}</td>
+                        <td>{{order.amount}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="col-md-2">
+            <i class="fa fa-plus-circle" aria-hidden="true" style="font-size:30px;margin-top:20px;" v-on:click="createorder"></i>
+        </div>
+    </div>
+    <div id="orderitems" class="container-fluid" v-if="seen">
+        <div class="row text-center">
+            <i class="fa fa-arrow-left" aria-hidden="true" v-on:click="showorders"></i>
+            <h2>ORDER DETAILES</h2>
+        </div>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6 well">
+                    <div class="form-group">
+                        <input type="text" name="cusname" id="cusname" class="form-control" placeholder="customername" v-model="cname">
+                    </div>
+                    <div class="form-group">
+                        <input type="text" name="phno" id="phno" class="form-control" placeholder="phonenumber" v-model="cphno">
+                    </div>
+                    <div class="form-group">
+                        <textarea name="address" id="address" class="form-control" placeholder="address" v-model="caddress"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <button v-on:click="addcustomer">add</button>
+                    </div>
+                </div>
+                <div class="col-md-6 well">
+                    <h3>Employe-name : {{ename}}</h3>
+                    <h3>Employe-Email : {{eemail}}</h3>
+                    <h3>Employe-Phonenumber : {{ephno}}</h3>
+                </div>
+            </div>
+        </div>
+        <!-- <div class="row pull-right">
+            <i class="fa fa-plus-circle" aria-hidden="true" style="font-size:30px;margin-top:20px;" v-on:click="addrow"></i>
+        </div> -->
+        <div class="container-fluid">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th scope="col">ORDER-ID</th>
+                        <th scope="col">ITEM-LIST</th>
+                        <th scope="col">PRICE</th>
+                        <th scope="col">QUANTITY</th>
+                        <th scope="col">AMOUNT</th>
+                        <th scope="col">TAX</th>
+                        <th scope="col">TOTAL-AMOUNT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="num in numbers">
+                        <td>
+                            {{orderid}}
+                        </td>
+                        <td>
+                            <select v-model="itemselected" v-on:change="myMethod()">
+                                <option v-for="item in itemsarr" v-bind:value="item.id">
+                                    {{item.id}}{{item.name}}
+                                </option>TOTAL-AMOUNT
+                            </select>
+                        </td>
+                        <td>
+                            {{price}}
+                        </td>
+                        <td>
+                            <input type="text" v-model="quantity" v-on:change="caluclate">{{avlquantity}}
+                        </td>
+                        <td>
+                            {{amount}}
+                        </td>
+                        <td>
+                            {{taxamount}}
+                        </td>
+                        <td>
+                            {{totalamount}}
+                        </td>
+                        <td>
+                            <button v-on:click="addorderitems">Add</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th scope="col">ORDER-ID</th>
+                        <th scope="col">ITEM-LIST</th>
+                        <th scope="col">PRICE</th>
+                        <th scope="col">QUANTITY</th>
+                        <th scope="col">AMOUNT</th>
+                        <th scope="col">TAX</th>
+                        <th scope="col">TOTAL-AMOUNT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="orderdetail in orderdetailsarr">
+                        <td>
+                            {{orderdetail.orderid}}
+                        </td>
+                        <td>
+                            {{orderdetail.itemid}}
+                        </td>
+                        <td>
+                            {{orderdetail.price}}
+                        </td>
+                        <td>
+                            {{orderdetail.quantity}}
+                        </td>
+                        <td>
+                            {{orderdetail.amount}}
+                        </td>
+                        <td>
+                            {{orderdetail.tax}}
+                        </td>
+                        <td>{{orderdetail.totalamount}}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="pull-right" style="margin-right:300px">
+                <h3>sum:{{amountval}}</h3>
+                <h3>taxsum:{{taxamountval}}</h3>
+                <h3>totalsum:{{sumval}}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    console.log(Vue);
+    var app2 = new Vue({
+        el: '#oderslist',
+        data: {
+            show: true,
+            seen: false,
+            itemsarr: [],
+            socket: null,
+            orderid: '',
+            itemselected: '',
+            price: '',
+            quantity: '',
+            avlquantity: '',
+            amount: '',
+            tax: '',
+            taxamount: '',
+            totalamount: '',
+            cname: '',
+            cphno: '',
+            caddress: '',
+            orderlistarr: [],
+            ename: '',
+            eid: '',
+            ephno: '',
+            eemail: '',
+            updatequantity: '',
+            orderdetailsarr: [],
+            numbers: [{
+                itemselected: '',
+                price: '',
+                quantity: '',
+                amount: '',
+                tax: '',
+                totalamount: '',
+                date: ''
+            }],
+            sumval: '',
+            taxamountval: '',
+            amountval: ''
+        },
+        methods: {
+            createorder() {
+                this.show = !this.show
+                this.seen = !this.seen
+                this.socket.emit("createorder")
+                this.orderdetailsarr = [];
+            },
+            // addrow() {
+            //     this.numbers.push({
+            //         itemselected: '',
+            //         price: '',
+            //         quantity: '',
+            //         amount: '',
+            //         tax: '',
+            //         totalamount: '',
+            //         data: ''
+            //     })
+            // },
+            showorders() {
+                this.show = !this.show
+                this.seen = !this.seen
+                this.orderlistarr = [];
+                this.socket.emit('getorderlist');
+            },
+            myMethod() {
+                console.log(this.itemselected);
+                this.socket.emit('gettaxpercentage', this.itemselected)
+            },
+            addorderitems() {
+                this.socket.emit('addorderitems', {
+                    orderid: this.orderid,
+                    itemselected: this.itemselected,
+                    price: this.price,
+                    quantity: this.quantity,
+                    amount: this.amount,
+                    tax: this.taxamount,
+                    totalamount: this.totalamount
+                })
+                this.itemselected = '';
+                this.price = '';
+                this.quantity = '';
+                this.avlquantity = ''
+                this.amount = '';
+                this.taxamount = '';
+                this.totalamount = ''
+            },
+            caluclate() {
+                var taxval = this.tax / 100;
+                this.amount = this.price * this.quantity;
+                this.taxamount = taxval * this.amount;
+                console.log("taxamount : "+this.taxamount)
+                this.totalamount = this.amount + this.taxamount;
+                this.updatequantity = this.avlquantity - this.quantity
+                console.log(this.updatequantity)
+                this.socket.emit('updateitemlist', {
+                    itemid: this.itemselected,
+                    quantity: this.updatequantity
+                })
+            },
+            addcustomer() {
+                this.socket.emit('addcustomer', {
+                    cname: this.cname,
+                    cphno: this.cphno,
+                    caddress: this.caddress
+                })
+            }
+        },
+        mounted() {
+            let scope = this
+            this.socket = io();
+            this.socket.emit('showitemlist');
+            this.socket.emit('getorderlist');
+            this.socket.on('itemlist', function (data) {
+                console.log(data);
+                // console.log(data[0].itemid);
+                for (var i = 0; i < data.length; i++) {
+                    scope.itemsarr.push({
+                        id: data[i].itemid,
+                        name: data[i].itemname,
+                    })
+                }
+            })
+            this.socket.on('orderslist', function (data) {
+                console.log(data);
+                scope.orderid = data[0].orderid
+            })
+            this.socket.on('orderlist', function (data) {
+                for (var i = 0; i < data.length; i++) {
+                    scope.orderlistarr.push({
+                        orderid: data[i].orderid,
+                        date: data[i].date,
+                        amount: data[i].amount
+                    })
+                }
+                // amount: data[i].amount
+            })
+            this.socket.on('empdetails', function (data) {
+                scope.eid = data.id;
+                scope.ename = data.name;
+                scope.ephno = data.phno;
+                scope.eemail = data.email;
+            })
+            this.socket.on('taxpercentage', function (data) {
+
+                console.log(data[0].tax_per)
+                scope.tax = data[0].tax_per;
+                scope.price = data[0].itemprice;
+                scope.avlquantity = data[0].itemquantity;
+            })
+            this.socket.on('orderdetails', function (data) {
+                scope.orderdetailsarr.push({
+                    orderid: data[0].orderid,
+                    itemid: data[0].itemid,
+                    price: data[0].price,
+                    quantity: data[0].quantity,
+                    amount: data[0].amount,
+                    tax: data[0].tax_per,
+                    totalamount: data[0].totalamount
+                })
+            })
+            this.socket.on('sum', function (data) {
+                scope.sumval = data[0].totalamount;
+                scope.taxamountval = data[0].tax_per;
+                scope.amountval = data[0].amount;
+            })
+        }
+    });
+</script>

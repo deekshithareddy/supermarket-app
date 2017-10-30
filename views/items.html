@@ -1,0 +1,128 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+<script src="https://unpkg.com/vue"></script>
+<style>
+</style>
+<div id="itemslist">
+    <div class="row">
+        <div class="col-md-10 text-center">
+            <h2>ITEMS</h2>
+        </div>
+        <div class="col-md-2">
+            <i class="fa fa-plus-circle" aria-hidden="true" style="font-size:30px;margin-top:20px;" v-on:click="switchof"></i>
+        </div>
+    </div>
+    <div class="container-fluid">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th scope="col">ITEM-ID</th>
+                    <th scope="col">ITEM NAME</th>
+                    <th scope="col">PRICE</th>
+                    <th scope="col">QUANTITY</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for='item in itemsarr'>
+                    <td>{{item.id}}</td>
+                    <td @click="editNote(item)">
+                        <input type="text" v-show="item == activeEdit" v-model="item.name">{{item.name}}</td>
+                    <td @click="editNote(item)">
+                        <input type="text" v-show="item == activeEdit" v-model="item.price">{{item.price}}</td>
+                    <td @click="editNote(item)">
+                        <input type="text" v-show="item == activeEdit" v-model="item.quantity">{{item.quantity}}</td>
+                    <td>
+                        <button v-on:click="edited(item)">edit</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    var app = new Vue({
+        el: '#itemslist',
+        data: {
+            itemsarr: [],
+            socket: null,
+            itemname: '',
+            quantity: '',
+            price: '',
+            activeEdit: null
+        },
+        methods: {
+            switchof() {
+                // this.show = !this.show
+                this.socket.emit('createitems', {
+                    name: this.itemname,
+                    price: this.price,
+                    quantity: this.quantity
+                })
+            },
+            editNote(item) {
+                this.activeEdit = item
+            },
+            edited(item) {
+                // console.log(id)
+                this.activeEdit = null
+                item.name = item.name.trim()
+                item.price = item.price.trim()
+                item.quantity = item.quantity.trim()
+                this.socket.emit('updateitems', {
+                    itemid: item.id,
+                    name: item.name,
+                    price: item.price,
+                    quantity: item.quantity
+                })
+            }
+        },
+        mounted() {
+            let scope = this
+            this.socket = io();
+            this.socket.emit('showitemlist');
+            this.socket.on('itemlist', function (data) {
+                console.log(data);
+                // console.log(data[0].itemid);
+                for (var i = 0; i < data.length; i++) {
+                    scope.itemsarr.push({
+                        id: data[i].itemid,
+                        name: data[i].itemname,
+                        price: data[i].itemprice,
+                        quantity: data[i].itemquantity
+                    })
+                }
+            })
+            this.socket.on('itemlists', function (data) {
+                console.log(data[0]);
+
+                scope.itemsarr.push({
+                    id: data[0].itemid,
+                    name: data[0].itemname,
+                    price: data[0].itemprice,
+                    quantity: data[0].itemquantity
+                })
+
+            })
+            this.socket.on('itemlist1', function (data) {
+                console.log(data[0]);
+                var iid = data[0].itemid
+                var itemvalues = {
+                    id: data[0].itemid,
+                    name: data[0].itemname,
+                    price: data[0].itemprice,
+                    quantity: data[0].itemquantity
+                }
+                for (var i = 0; i < scope.itemsarr.length; i++) {
+                    if (scope.itemsarr[i].id == iid) {
+                        console.log("iitemsarrr == " + scope.itemsarr[i].id)
+                        let index = scope.itemsarr.findIndex(x => x.id == scope.itemsarr[i].id);
+                        console.log("indesoff == " + index);
+                        scope.itemsarr.splice(index, 1, itemvalues);
+                    }
+                }
+            })
+
+        }
+    })
+</script>

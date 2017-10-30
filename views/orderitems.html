@@ -1,0 +1,176 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+<script src="https://unpkg.com/vue"></script>
+<div id="orderitems" class="container-fluid">
+    <div class="row text-center">
+        <h2>ORDER DETAILES</h2>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6 well">
+                <div class="form-group">
+                    <input type="text" name="cusname" id="cusname" class="form-control" placeholder="customername" v-model="cname">
+                </div>
+                <div class="form-group">
+                    <input type="text" name="phno" id="phno" class="form-control" placeholder="phonenumber" v-model="cphno">
+                </div>
+                <div class="form-group">
+                    <textarea name="address" id="address" class="form-control" placeholder="address" v-model="caddress"></textarea>
+                </div>
+                <div class="form-group">
+                    <button v-on:click="addcustomer">add</button>
+                </div>
+            </div>
+            <div class="col-md-6 well">
+                <h3>Employe-name : </h3>
+                <h3>Employe-Email : </h3>
+                <h3>Employe-Phonenumber : </h3>
+            </div>
+        </div>
+    </div>
+    <div class="row pull-right">
+        <i class="fa fa-plus-circle" aria-hidden="true" style="font-size:30px;margin-top:20px;" v-on:click="addrow"></i>
+    </div>
+    <div class="container-fluid">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th scope="col">ORDER-ID</th>
+                    <th scope="col">ITEM-LIST</th>
+                    <th scope="col">PRICE</th>
+                    <th scope="col">QUANTITY</th>
+                    <th scope="col">AMOUNT</th>
+                    <th scope="col">TAX</th>
+                    <th scope="col">TOTAL-AMOUNT</th>
+                    <th scope="col">DATE</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="num in numbers">
+                    <td>
+                        {{orderid}}
+                    </td>
+                    <td>
+                        <select v-model="itemselected">
+                            <option v-for="item in itemsarr" v-bind:value="item.name">
+                                {{item.name}}
+                            </option>TOTAL-AMOUNT
+                        </select>
+                    </td>
+                    <td>
+                        <input type="text" v-model="price">
+                    </td>
+                    <td>
+                        <input type="text" v-model="quantity">
+                    </td>
+                    <td>
+                        <input type="text" v-model="amount">
+                    </td>
+                    <td>
+                        <input type="text" v-model="tax">
+                    </td>
+                    <td>
+                        <input type="text" v-model="totalamount">
+                    </td>
+                    <td>
+                        <input type="date" v-model="date">
+                    </td>
+                    <td>
+                        <button v-on:click="addorderitems">Add</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    console.log(Vue);
+    var app3 = new Vue({
+        el: '#orderitems',
+        data: {
+            itemsarr: [],
+            socket: null,
+            orderid:'',
+            itemselected: '',
+            price: '',
+            quantity: '',
+            amount: '',
+            tax: '',
+            totalamount: '',
+            date:'',
+            cname:'',
+            cphno:'',
+            caddress:'',
+            orderlistarr:[],
+            numbers: [{
+                itemselected: '',
+                price: '',
+                quantity: '',
+                amount: '',
+                tax: '',
+                totalamount: '',
+                date:''
+            }]
+        },
+        methods: {
+            addrow() {
+                this.numbers.push({
+                    itemselected: '',
+                    price: '',
+                    quantity: '',
+                    amount: '',
+                    tax: '',
+                    totalamount: '',
+                    data:''
+                })
+            },
+            addorderitems(){
+                this.socket.emit('addorderitems',{
+                    orderid: this.orderid,
+                    itemselected: this.itemselected,
+                    price: thjis.price,
+                    quantity: this.quantity,
+                    amount: this.amount,
+                    tax: this.tax,
+                    totalamount: this.totalamount,
+                    date:this.date
+                })
+            },
+            addcustomer(){
+                this.socket.emit('addcustomer',{
+                    cname:this.cname,
+                    cphno:this.cphno,
+                    caddress:this.caddress
+                })
+            }
+        },
+        mounted() {
+            let scope = this
+            this.socket = io();
+            this.socket.emit('showitemlist');
+            this.socket.on('itemlist', function (data) {
+                console.log(data);
+                // console.log(data[0].itemid);
+                for (var i = 0; i < data.length; i++) {
+                    scope.itemsarr.push({
+                        name: data[i].itemname,
+                    })
+                }
+            })
+            this.socket.on('orderslist',function(data){
+                console.log(data);
+                // scope.orderid=data[0].orderid
+            })
+            this.socket.on('orderlist',function(data){
+                for (var i = 0; i < data.length; i++) {
+                    scope.orderlistarr.push({
+                        orderid:data[i].orderid,
+                        date:data[i].date,
+                        amount:data[i].amount
+                    })
+                }
+            })
+        }
+    });
+</script>
